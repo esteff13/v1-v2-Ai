@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Analytics Dashboard Widget - v1</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 20px; }
+  .dashboard { width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; }
+  .toolbar { display: flex; justify-content: space-between; margin-bottom: 20px; }
+  .search-bar { width: 300px; padding: 8px; border: 1px solid #ccc; }
+  .filter-chip { display: inline-block; padding: 6px 14px; margin-right: 8px; background: #e0e0e0; color: #bdbdbd; border-radius: 20px; cursor: pointer; }
+  .cards { display: flex; gap: 16px; }
+  .card { width: 280px; height: 120px; background: #fafafa; border: 1px solid #eee; padding: 12px; overflow: hidden; white-space: nowrap; }
+  .card h3 { margin: 0 0 8px 0; font-size: 16px; }
+  .card p { color: #999; font-size: 13px; }
+  .stat { font-size: 28px; font-weight: bold; color: #2b2b2b; }
+</style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="toolbar">
+      <input class="search-bar" type="text" placeholder="Search users...">
+      <div>
+        <span class="filter-chip" onclick="filterCard('active')">Active</span>
+        <span class="filter-chip" onclick="filterCard('inactive')">Inactive</span>
+        <span class="filter-chip" onclick="filterCard('pending')">Pending</span>
+      </div>
+    </div>
+    <div class="cards">
+      <div class="card">
+        <h3>Total Revenue This Quarter</h3>
+        <div class="stat">$128,450.75</div>
+        <p>Compared to last quarter performance</p>
+      </div>
+      <div class="card">
+        <h3>Active User Accounts</h3>
+        <div class="stat">4,201</div>
+        <p>Currently active this month</p>
+      </div>
+      <div class="card">
+        <h3>Pending Support Tickets</h3>
+        <div class="stat">37</div>
+        <p>Awaiting agent response</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function filterCard(type) {
+      alert('Filtering by: ' + type);
+    }
+  </script>
+</body>
+</html>

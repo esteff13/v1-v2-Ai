@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Analytics Dashboard Widget — v2 (Refined)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141B24;
+    --ink-soft:#5A6673;
+    --line:#E3E8EE;
+    --surface:#FFFFFF;
+    --canvas:#EEF1F5;
+    --brand:#1F6F5C;
+    --brand-soft:#E4F0EC;
+    --up:#1F6F5C;
+    --down:#B23B3B;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    padding:28px 18px;
+    background:var(--canvas);
+    font-family:'Inter',system-ui,sans-serif;
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .dashboard{
+    width:100%;
+    max-width:940px;          /* FIX 1: fluid max-width, was a fixed 900px */
+    margin:0 auto;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:22px;
+  }
+
+  .head{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:6px;
+    padding-bottom:16px;
+    border-bottom:1px solid var(--line);
+    margin-bottom:18px;
+  }
+  .head h1{
+    font-size:16px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .head .period{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+
+  .toolbar{
+    display:flex;
+    flex-wrap:wrap;
+    gap:12px;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:20px;
+  }
+
+  .search-wrap{
+    position:relative;
+    flex:1 1 220px;
+    min-width:0;              /* FIX 1: allows shrink instead of forcing overflow */
+    max-width:320px;
+  }
+  .search-bar{
+    width:100%;
+    padding:9px 12px 9px 34px;
+    border:1px solid var(--line);
+    border-radius:7px;
+    font:inherit;
+    font-size:14px;
+    background:var(--surface);
+    color:var(--ink);
+  }
+  .search-bar::placeholder{color:#8A97A4}
+  .search-bar:focus-visible{
+    outline:2px solid var(--brand);
+    outline-offset:1px;
+    border-color:var(--brand);
+  }
+  .search-wrap svg{
+    position:absolute;
+    left:11px; top:50%;
+    transform:translateY(-50%);
+    width:14px; height:14px;
+    stroke:#8A97A4;
+    pointer-events:none;
+  }
+
+  .filter-group{display:flex;flex-wrap:wrap;gap:7px}
+  .filter-chip{
+    padding:7px 15px;
+    background:var(--surface);
+    color:var(--ink);          /* FIX 2: was #bdbdbd on #e0e0e0 — failed WCAG contrast */
+    border:1px solid var(--line);
+    border-radius:999px;
+    cursor:pointer;
+    font:inherit;
+    font-size:13px;
+    font-weight:500;
+    transition:background .12s ease, border-color .12s ease;
+  }
+  .filter-chip:hover{border-color:#C3CDD8}
+  .filter-chip[aria-pressed="true"]{
+    background:var(--brand-soft);
+    border-color:var(--brand);
+    color:var(--brand);
+  }
+  .filter-chip:focus-visible{   /* FIX 2: real <button> + visible keyboard focus ring */
+    outline:2px solid var(--brand);
+    outline-offset:2px;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); /* FIX 1: grid, not fixed flex row */
+    gap:14px;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px;
+    min-width:0;               /* FIX 1: lets content wrap instead of clipping */
+  }
+  .card h2{
+    margin:0 0 10px;
+    font-size:13px;
+    font-weight:500;
+    color:var(--ink-soft);
+    white-space:normal;        /* FIX 1: was nowrap + overflow:hidden */
+    overflow-wrap:break-word;
+    line-height:1.35;
+  }
+  .stat{
+    font-family:'Roboto Mono',ui-monospace,monospace;
+    font-size:clamp(22px,4.6vw,29px);
+    font-weight:500;
+    letter-spacing:-0.02em;
+    line-height:1.1;
+    display:block;
+    overflow-wrap:break-word;
+  }
+  .delta{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    margin-top:9px;
+    font-size:12.5px;
+    font-weight:500;
+  }
+  .delta.up{color:var(--up)}
+  .delta.down{color:var(--down)}
+  .delta .note{color:var(--ink-soft);font-weight:400}
+
+  .spark{display:block;width:100%;height:26px;margin-top:12px}
+
+  .sr-only{
+    position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+  }
+
+  @media (max-width:480px){
+    body{padding:16px 12px}
+    .dashboard{padding:16px}
+    .toolbar{flex-direction:column;align-items:stretch}
+    /* flex-basis maps to HEIGHT once direction is column — reset it or the
+       wrapper becomes a 220px-tall empty box and the search icon floats. */
+    .search-wrap{flex:0 0 auto;max-width:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+  <div class="dashboard">
+
+    <div class="head">
+      <h1>Account overview</h1>
+      <span class="period">Last 30 days</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>
+        </svg>
+        <label class="sr-only" for="user-search">Search users</label>
+        <input id="user-search" class="search-bar" type="text" placeholder="Search users">
+      </div>
+
+      <div class="filter-group" role="group" aria-label="Filter by status">
+        <button type="button" class="filter-chip" aria-pressed="false" onclick="toggleChip(this)">Active</button>
+        <button type="button" class="filter-chip" aria-pressed="false" onclick="toggleChip(this)">Inactive</button>
+        <button type="button" class="filter-chip" aria-pressed="false" onclick="toggleChip(this)">Pending</button>
+      </div>
+    </div>
+
+    <div class="cards">
+
+      <div class="card">
+        <h2>Total revenue this quarter</h2>
+        <span class="stat">$128,450.75</span>
+        <span class="delta up">&#9650; 12.4% <span class="note">vs last quarter</span></span>
+        <svg class="spark" viewBox="0 0 120 26" preserveAspectRatio="none" aria-hidden="true">
+          <polyline points="0,21 15,19 30,20 45,15 60,16 75,11 90,9 105,6 120,3"
+            fill="none" stroke="#1F6F5C" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h2>Active user accounts</h2>
+        <span class="stat">4,201</span>
+        <span class="delta up">&#9650; 3.1% <span class="note">vs last month</span></span>
+        <svg class="spark" viewBox="0 0 120 26" preserveAspectRatio="none" aria-hidden="true">
+          <polyline points="0,17 15,18 30,14 45,15 60,12 75,13 90,10 105,11 120,8"
+            fill="none" stroke="#1F6F5C" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="card">
+        <h2>Pending support tickets</h2>
+        <span class="stat">37</span>
+        <span class="delta down">&#9660; 8 tickets <span class="note">vs last week</span></span>
+        <svg class="spark" viewBox="0 0 120 26" preserveAspectRatio="none" aria-hidden="true">
+          <polyline points="0,6 15,8 30,7 45,12 60,10 75,15 90,17 105,16 120,20"
+            fill="none" stroke="#B23B3B" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    function toggleChip(btn){
+      // real <button> elements are natively keyboard-operable (Tab + Enter/Space)
+      const pressed = btn.getAttribute('aria-pressed') === 'true';
+      btn.setAttribute('aria-pressed', String(!pressed));
+    }
+  </script>
+</body>
+</html>
